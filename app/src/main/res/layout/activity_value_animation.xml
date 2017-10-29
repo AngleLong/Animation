@@ -45,4 +45,16 @@
         android:layout_height="wrap_content"
         android:onClick="codeAnimatorSet"
         android:text="Animator的代码设置"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="ObjectAnimator"
+        android:text="使用属性动画动态改变View的相应宽度"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:onClick="ValueAnimator"
+        android:text="ValueAnimator实现属性改变"
+        android:layout_height="wrap_content"/>
 </LinearLayout>

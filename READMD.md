@@ -1,3 +1,5 @@
+[不怕跌倒，所以飞翔](http://www.jianshu.com/u/4a99c9554afc)
+
 #Android动画分类
 ##1.View动画
 ###1.1 View动画有四种变换效果(对应这Animation的四个子类):
@@ -313,3 +315,100 @@ public static interface AnimatorUpdateListener {
         void onAnimationUpdate(ValueAnimator animation);
     }
 ```
+
+###2.4对任意对象使用属性动画
+
+> 任意对象使用属性动画必要条件:
+
+  - 要有相应的get/set方法,否则会报异常
+  - 相应的get/set方法要能直观的从UI层面上反应出来,否则看不见效果
+  - 还有一点要注意的是这个属性动画是作用在View的对象上,所以应该是View有的属性,而不是继承它的对象重新生成的属性
+  
+>针对于继承的View要使用属性动画的情况,官方给出了相应的解决方案:
+
+   - 给对象加上相应的get/set方法(如果你有权限的话)
+   - 用一个类来包装原始对象,间接的提供get/set方法
+   ```
+   /**
+    * author :  贺金龙
+    * create time : 2017/10/29 14:21
+    * description : 包装类,为了向外面提供相应的get/set方法
+    * instructions : 因为没有相应改变宽度和高度的方法,所以这里自己包装一个相应的get/set方法
+    * version :
+    */
+   public class ViewWrapper {
+       private View mTargetView;
+   
+   
+       /**
+        * author :  贺金龙
+        * create time : 2017/10/29 14:28
+        * description : 传入相应的View,进行设置一些内容
+        * instructions :
+        * version :
+        */
+       public void setTargetView(View targetView) {
+           mTargetView = targetView;
+       }
+   
+       /**
+        * author :  贺金龙
+        * create time : 2017/10/29 14:30
+        * description : 获取宽度的方法
+        * instructions :
+        * version :
+        */
+       public int getWidth() {
+           return mTargetView.getLayoutParams().width;
+       }
+   
+       /**
+        * author :  贺金龙
+        * create time : 2017/10/29 14:31
+        * description : 设置宽度的方法
+        * instructions : 设置相应的宽度
+        * version :
+        *
+        * @param width 宽度
+        */
+       public void setWidth(int width) {
+           mTargetView.getLayoutParams().width = width;
+           /*重新绘制View的方法*/
+           mTargetView.requestLayout();
+       } 
+   }
+   
+   -----------------------------------------------------
+   //使用的代码
+    ViewWrapper wrapper = new ViewWrapper();
+    wrapper.setTargetView(view);
+    ObjectAnimator.ofInt(wrapper, "width", 0, 500).setDuration(1000).start();
+   ```
+   上面注释已经写的很详细了,说下大体的思路,传入一个View并通过LayoutParams设置相应的宽高,这样就相当于变相的设置了View的宽高了
+   
+- 采用ValueAnimator监听动画过程,实现属性的改变
+```
+        ValueAnimator valueAnimator = ValueAnimator.ofInt(0,500);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            /*持有一个整形的估值器*/
+            private IntEvaluator mIntEvaluator = new IntEvaluator();
+
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                /*获取当前的动画值*/
+                Integer animatedValue = (Integer) animation.getAnimatedValue();
+                Log.e("done", "onAnimationUpdate: " + animatedValue);
+
+                /*获取当前值占整个动画的比例,这个比例是0~1*/
+                float animatedFraction = animation.getAnimatedFraction();
+
+                view.getLayoutParams().width = mIntEvaluator.evaluate(animatedFraction, 0, 500);
+                view.requestLayout();
+            }
+        });
+        valueAnimator.setDuration(500);
+        valueAnimator.start();
+```
+其实就是监听ValueAnimator的动画改变,用估值器进行数值的改变
+
+其实关于属性动画还有很多问题,这里面只是粗略的了解了一些皮毛......
